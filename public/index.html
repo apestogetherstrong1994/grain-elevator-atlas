@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Grain Elevator Atlas</title>
+<meta name="description" content="Every licensed U.S. grain elevator and warehouse from public federal and state records, with shared BD assignments and notes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='9' y='6' width='6' height='22' fill='%23b57d12'/%3E%3Crect x='17' y='10' width='6' height='18' fill='%232c5f4a'/%3E%3Cpath d='M8 6l4-3 4 3z' fill='%23b57d12'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: field-office console. Summary strip, then map (left) beside a working list (right); a drawer slides in for one facility. */
+:root{
+  --bg:#eef0ec; --panel:#f9faf7; --ink:#1b211f; --muted:#5d6762; --rule:#d3d8d1; --rule-strong:#a9b2ab;
+  --accent:#2c5f4a; --accent-ink:#ffffff; --grain:#b57d12; --map-land:#e2e6df; --map-line:#ffffff; --dot:#7b8580;
+  --s-none:#8a948f; --s-research:#4f7cac; --s-contacted:#8b6bb5; --s-convo:#c47a12; --s-visit:#2c8a6a; --s-pilot:#1f6b3f; --s-nofit:#b0473b;
+  --k-federal:#2f6db5; --k-state:#2a8a57; --k-dealer:#c27a0e; --k-ccc:#8b5fbf; --k-export:#c2453a; --k-other:#87918c;
+  --f-display:"Archivo", "Arial Narrow", Arial, sans-serif; --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121614; --panel:#1a1f1d; --ink:#e7ebe6; --muted:#9aa49e; --rule:#2c3330; --rule-strong:#46504b;
+  --accent:#6fb894; --accent-ink:#0d1210; --grain:#e0a83a; --map-land:#232a27; --map-line:#121614; --dot:#7d8883;
+  --s-none:#7d8883; --s-research:#7aa7d6; --s-contacted:#b499db; --s-convo:#e6a13d; --s-visit:#4fc19a; --s-pilot:#8fd6a8; --s-nofit:#e07b6f;
+  --k-federal:#6fa3e6; --k-state:#5cc08a; --k-dealer:#e6a13d; --k-ccc:#b591e0; --k-export:#ec7a6c; --k-other:#8d9893; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121614; --panel:#1a1f1d; --ink:#e7ebe6; --muted:#9aa49e; --rule:#2c3330; --rule-strong:#46504b;
+  --accent:#6fb894; --accent-ink:#0d1210; --grain:#e0a83a; --map-land:#232a27; --map-line:#121614; --dot:#7d8883;
+  --s-none:#7d8883; --s-research:#7aa7d6; --s-contacted:#b499db; --s-convo:#e6a13d; --s-visit:#4fc19a; --s-pilot:#8fd6a8; --s-nofit:#e07b6f;
+  --k-federal:#6fa3e6; --k-state:#5cc08a; --k-dealer:#e6a13d; --k-ccc:#b591e0; --k-export:#ec7a6c; --k-other:#8d9893; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:18px 28px;max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:clamp(26px,3.4vw,38px);letter-spacing:-.01em;margin:0;line-height:1;text-wrap:balance}
+h1 span{color:var(--grain)}
+.sub{color:var(--muted);margin:6px 0 0;max-width:70ch}
+.me{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.me img{width:24px;height:24px;border-radius:50%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--panel);padding:10px 14px;min-width:0}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.stat .v{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:24px;font-variant-numeric:tabular-nums}
+.stat .v small{font-family:var(--f-body);font-size:12px;font-weight:400;color:var(--muted);margin-left:4px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters input[type=search]{flex:1 1 240px;min-width:0}
+input,select,textarea,button{font:inherit;color:inherit}
+input[type=search],select,textarea,.picker input{background:var(--panel);border:1px solid var(--rule-strong);border-radius:var(--radius);padding:7px 10px}
+select{padding-right:6px;max-width:100%}
+button{cursor:pointer;border-radius:var(--radius);border:1px solid var(--rule-strong);background:var(--panel);padding:7px 12px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--grain);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);min-width:0}
+.maphead,.listhead{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--rule)}
+.maphead b,.listhead b{font-family:var(--f-display);font-stretch:85%;font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.mapbox{position:relative;aspect-ratio:975/610;max-width:100%}
+.mapbox svg,.mapbox canvas{position:absolute;inset:0;width:100%;height:100%}
+.mapbox canvas{cursor:crosshair}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:5px 8px;border-radius:4px;white-space:nowrap;transform:translate(-50%,-130%)}
+.mapnote{font-size:12px;color:var(--muted);padding:8px 12px;border-top:1px solid var(--rule)}
+.list{max-height:720px;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--rule-strong);cursor:pointer;white-space:nowrap;user-select:none}
+td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+tr.row{cursor:pointer}
+tr.row:hover td{background:color-mix(in srgb, var(--accent) 7%, transparent)}
+tr.row.sel td{background:color-mix(in srgb, var(--grain) 14%, transparent)}
+.nm{font-weight:600}
+.loc{color:var(--muted);font-size:12px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12px;text-align:right;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap}
+.pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.owner{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.owner img{width:18px;height:18px;border-radius:50%}
+.more{padding:10px;text-align:center}
+.empty{padding:28px 16px;color:var(--muted);text-align:center}
+/* drawer */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--panel);border-left:1px solid var(--rule-strong);box-shadow:-12px 0 30px rgba(0,0,0,.12);z-index:20;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.dhead{padding:16px 18px 12px;border-bottom:1px solid var(--rule);display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.dhead h2{font-family:var(--f-display);font-stretch:85%;font-size:22px;margin:0;line-height:1.1;text-wrap:balance}
+.dbody{padding:14px 18px 24px;overflow:auto;display:flex;flex-direction:column;gap:16px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.sec h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.statusgrid{display:flex;flex-wrap:wrap;gap:6px}
+.statusgrid button{font-size:12px;padding:5px 9px;display:inline-flex;gap:6px;align-items:center}
+.statusgrid button i{width:8px;height:8px;border-radius:50%}
+.statusgrid button[aria-pressed=true]{border-color:var(--ink);font-weight:600;background:color-mix(in srgb, var(--ink) 6%, var(--panel))}
+.picker{position:relative;display:flex;gap:6px;flex-wrap:wrap}
+.picker input{flex:1 1 180px;min-width:0}
+.hits{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--rule-strong);border-radius:var(--radius);z-index:5;max-height:240px;overflow:auto}
+.hits button{display:flex;gap:8px;align-items:center;width:100%;border:0;border-radius:0;text-align:left;padding:8px 10px;background:transparent}
+.hits button:hover,.hits button:focus{background:color-mix(in srgb, var(--accent) 10%, transparent)}
+.hits img{width:22px;height:22px;border-radius:50%}
+.cur{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.cur img{width:24px;height:24px;border-radius:50%}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{border-left:3px solid var(--rule-strong);padding:2px 0 2px 10px}
+.note .meta{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.note .meta img{width:16px;height:16px;border-radius:50%}
+.note p{margin:3px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.note .del{border:0;background:none;padding:0 2px;font-size:12px;color:var(--muted);text-decoration:underline}
+textarea{width:100%;min-height:72px;resize:vertical}
+.row2{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+.hint{font-size:12px;color:var(--muted)}
+.src a{color:var(--accent)}
+.banner{font-size:13px;padding:8px 12px;border:1px solid var(--rule-strong);border-radius:var(--radius);background:var(--panel)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:19}
+.colorby{display:inline-flex;border:1px solid var(--rule-strong);border-radius:var(--radius);overflow:hidden;font-size:12px}
+.colorby button{border:0;border-radius:0;padding:4px 9px;background:var(--panel)}
+.colorby button[aria-pressed=true]{background:var(--ink);color:var(--bg);font-weight:600}
+.maptools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}
+.kindtag{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-top:2px}
+.kindtag i{width:7px;height:7px;border-radius:2px;display:inline-block}
+.key{padding:12px}
+.keyhead{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.keyhead b{font-family:var(--f-display);font-stretch:85%;font-size:16px}
+.keygrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px}
+.keyitem{display:grid;grid-template-columns:14px 1fr;gap:4px 10px;align-items:start;text-align:left;padding:10px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent}
+.keyitem[aria-pressed=true]{border-color:var(--ink);background:color-mix(in srgb, var(--ink) 5%, var(--panel))}
+.keyitem i{width:14px;height:14px;border-radius:3px;margin-top:2px}
+.keyitem .t{font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.keyitem .t span{font-family:var(--f-mono);font-weight:400;font-size:12px;color:var(--muted)}
+.keyitem .d{grid-column:2;font-size:12px;color:var(--muted)}
+html,body{margin:0}
+.auth{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.auth form{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.auth input{background:var(--panel);border:1px solid var(--rule-strong);border-radius:var(--radius);padding:7px 10px;min-width:220px}
+.hits .em{color:var(--muted);font-size:12px;margin-left:auto}
+.av{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;background:color-mix(in srgb, var(--accent) 18%, var(--panel));color:var(--ink);flex:none}
+footer{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+footer a{color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Grain Elevator <span>Atlas</span></h1>
+      <p class="sub" id="subline">Every licensed grain elevator and warehouse we could find in public federal and state records, with a shared place to divide up outreach.</p>
+    </div>
+    <div class="auth" id="auth"></div>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><div class="k">Facilities</div><div class="v" id="st-total">–</div></div>
+    <div class="stat"><div class="k">States</div><div class="v" id="st-states">–</div></div>
+    <div class="stat"><div class="k">Known capacity</div><div class="v" id="st-cap">–</div></div>
+    <div class="stat"><div class="k">Assigned</div><div class="v" id="st-assigned">–</div></div>
+    <div class="stat"><div class="k">In conversation or later</div><div class="v" id="st-active">–</div></div>
+  </section>
+
+  <section class="filters" aria-label="Filters">
+    <input type="search" id="q" placeholder="Search name, company, city, county or license #" aria-label="Search">
+    <select id="f-state" aria-label="State"><option value="">All states</option></select>
+    <select id="f-status" aria-label="Status"><option value="">Any status</option></select>
+    <select id="f-owner" aria-label="Owner">
+      <option value="">Anyone or no one</option>
+      <option value="__me">Assigned to me</option>
+      <option value="__none">Unassigned</option>
+      <option value="__any">Assigned to someone</option>
+    </select>
+    <select id="f-kind" aria-label="License type"><option value="">All license types</option></select>
+    <select id="f-src" aria-label="Source"><option value="">All sources</option></select>
+    <select id="f-cap" aria-label="Capacity">
+      <option value="">Any capacity</option>
+      <option value="1000000">1M+ bu</option>
+      <option value="5000000">5M+ bu</option>
+      <option value="10000000">10M+ bu</option>
+    </select>
+    <button id="reset">Clear filters</button>
+    <button id="export" hidden>Export CSV</button>
+  </section>
+
+  <section class="main">
+    <div class="card">
+      <div class="maphead"><b id="maptitle">Map</b><div class="maptools"><div class="legend" id="legend"></div><div class="colorby" role="group" aria-label="Color dots by"><button id="cb-kind" aria-pressed="true">License type</button><button id="cb-status" aria-pressed="false">Status</button></div></div></div>
+      <div class="mapbox" id="mapbox">
+        <svg id="mapsvg" viewBox="0 0 975 610" aria-hidden="true"></svg>
+        <canvas id="mapcv" aria-label="Map of facilities. Click a dot to open it, or a state to filter."></canvas>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <div class="mapnote" id="mapnote">Click a dot to open a facility, or a state to filter to it.</div>
+    </div>
+    <div class="card">
+      <div class="listhead"><b id="listtitle">Facilities</b><span class="hint" id="sorthint">Sorted by capacity</span></div>
+      <div class="list" id="listwrap">
+        <table>
+          <thead><tr>
+            <th data-sort="name">Facility</th>
+            <th data-sort="cap" style="text-align:right">Bushels</th>
+            <th data-sort="status">Status</th>
+            <th data-sort="owner">Owner</th>
+          </tr></thead>
+          <tbody id="tbody"><tr><td colspan="4" class="empty">Loading the inventory…</td></tr></tbody>
+        </table>
+        <div class="more" id="more" hidden><button id="morebtn">Show 100 more</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card key" aria-labelledby="keytitle">
+    <div class="keyhead"><b id="keytitle">License types</b><span class="hint">Colors match the map and list. Click a type to filter to it.</span></div>
+    <div class="keygrid" id="keygrid"></div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Facility detail">
+  <div class="dhead">
+    <div><h2 id="d-name"></h2><div class="loc" id="d-loc"></div></div>
+    <button id="d-close" aria-label="Close">Close</button>
+  </div>
+  <div class="dbody">
+    <div class="sec">
+      <h3>Status</h3>
+      <div class="statusgrid" id="d-status"></div>
+    </div>
+    <div class="sec">
+      <h3>BD owner</h3>
+      <div class="cur" id="d-owner"></div>
+      <div class="picker" id="d-picker">
+        <input id="d-search" placeholder="Search a teammate by name" autocomplete="off" aria-label="Search teammate">
+        <button id="d-mine">Assign to me</button>
+        <button id="d-unassign">Unassign</button>
+        <div class="hits" id="d-hits" hidden></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Notes</h3>
+      <div class="notes" id="d-notes"></div>
+      <div style="margin-top:10px">
+        <textarea id="d-text" placeholder="Add a status update: who you spoke to, next step, timing…" aria-label="New note"></textarea>
+        <div class="row2"><span class="hint" id="d-hint"></span><button class="primary" id="d-add">Add note</button></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>Facility record</h3>
+      <dl class="kv" id="d-kv"></dl>
+    </div>
+  </div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+const STATUSES=[
+  {k:"none",label:"Not started",v:"--s-none"},
+  {k:"research",label:"Researching",v:"--s-research"},
+  {k:"contacted",label:"Contacted",v:"--s-contacted"},
+  {k:"convo",label:"In conversation",v:"--s-convo"},
+  {k:"visit",label:"Site visit",v:"--s-visit"},
+  {k:"pilot",label:"Pilot",v:"--s-pilot"},
+  {k:"nofit",label:"Not a fit",v:"--s-nofit"}];
+const KINDS=[
+  {k:"export",label:"Export elevator",v:"--k-export",d:"Port terminal that loads grain onto ships for export, from 2020–2026 operator, port and Army Corps records."},
+  {k:"federal",label:"Federal warehouse",v:"--k-federal",d:"Licensed by USDA under the U.S. Warehouse Act (USWA). Usually the larger elevators and terminals."},
+  {k:"state",label:"State warehouse",v:"--k-state",d:"Grain storage licensed and bonded by a state. Most country elevators fall here."},
+  {k:"dealer",label:"Dealer or buyer only",v:"--k-dealer",d:"Licensed to buy grain but not to store it for others. Can be an office or feedlot rather than an elevator."},
+  {k:"ccc",label:"CCC approved only",v:"--k-ccc",d:"Approved to store USDA Commodity Credit Corporation grain, with no warehouse license in our sources."},
+  {k:"other",label:"Type not given",v:"--k-other",d:"Source lists the site as licensed but doesn't say which license (mainly Indiana)."}];
+const KMAP=Object.fromEntries(KINDS.map(s=>[s.k,s]));
+function kindOf(t){
+  t=String(t||"").replace(/\(no [^)]*\)/gi,"");
+  if(/export elevator/i.test(t))return"export";
+  if(/USWA|Federal Warehouse/i.test(t))return"federal";
+  if(/state licensed|warehouse licen[cs]e|state warehouse|storage warehouse|buy and store|granary|warehouse location|public grain warehouse|public country warehouse|commodity warehouse|warehouse & dealer|bonded warehouse|facility license/i.test(t))return"state";
+  if(/type not specified/i.test(t))return"other";
+  if(/dealer|buyer|handler|grain certificate/i.test(t))return"dealer";
+  if(/CCC approved/i.test(t))return"ccc";
+  return"other";}
+let colorBy="kind";
+const ACTIVE=new Set(["convo","visit","pilot"]);
+const SMAP=Object.fromEntries(STATUSES.map(s=>[s.k,s]));
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt=n=>n==null||n===""?"":Number(n).toLocaleString("en-US");
+const esc=s=>String(s??"");
+
+let DATA=null, ROWS=[], BYID=new Map(), SOURCES=[];
+let tracking=new Map(); // fid -> {owner,status,updatedAt,updatedBy}
+let notesBy=new Map();  // fid -> [{id,text,by,at}]
+let db=null, myId=null, canWrite=null;            // db is the Supabase client once the viewer is a signed-in team member
+let sb=null, session=null, channel=null, team=new Map(); // team: email -> {email,name}
+let filtered=[], shown=100, sortKey="cap", sortDir=-1, openId=null;
+const nameOf=e=>{if(!e)return"";const t=team.get(String(e).toLowerCase());return t&&t.name?t.name:String(e).split("@")[0];};
+const profileCache=new Proxy({},{get:(_,k)=>typeof k==="string"&&k.includes("@")?{name:nameOf(k)}:undefined,set:()=>true});
+
+// ---------- persistence of view prefs (per viewer only)
+function loadPrefs(){try{return JSON.parse(localStorage.getItem("gea-prefs")||"{}")}catch(e){return{}}}
+function savePrefs(p){try{localStorage.setItem("gea-prefs",JSON.stringify(p))}catch(e){}}
+
+// ---------- data
+async function loadData(){
+  const r=await fetch("elevators.json"); if(!r.ok) throw new Error("data "+r.status);
+  DATA=await r.json(); SOURCES=DATA.sources;
+  const C=DATA.cols; const ix=Object.fromEntries(C.map((c,i)=>[c,i]));
+  ROWS=DATA.rows.map(a=>{const o={};for(const c of C)o[c]=a[ix[c]];o.srcs=(o.src||"").split("|").filter(Boolean);o.kind=kindOf(o.license_type);
+    o._s=[o.name,o.company,o.city,o.county,o.state,o.license_number,o.zip].join(" ").toLowerCase();return o;});
+  for(const r of ROWS)BYID.set(r.id,r);
+}
+
+// ---------- shared backend (Supabase: magic-link sign-in, team / tracking / notes tables, realtime)
+async function initBackend(){
+  const cfg=window.ATLAS_CONFIG||{};
+  if(!cfg.supabaseUrl||!cfg.supabaseAnonKey||!window.supabase){setBanner("Shared tracking isn't set up for this deployment yet, so assignments and notes are hidden. You can still browse and export the inventory.");return;}
+  sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,detectSessionInUrl:true}});
+  sb.auth.onAuthStateChange((ev,s)=>{const before=session&&session.user&&session.user.id;session=s;const after=s&&s.user&&s.user.id;if(ev==="INITIAL_SESSION"||before!==after)afterAuth();});
+}
+async function afterAuth(){
+  myId=session&&session.user&&session.user.email?session.user.email.toLowerCase():null;
+  db=null;canWrite=null;tracking=new Map();notesBy=new Map();
+  if(channel){sb.removeChannel(channel);channel=null;}
+  renderAuth();
+  if(!session){setBanner("Sign in with your Lumaril email to see and update assignments, statuses and notes. You can still browse the inventory.");refresh();return;}
+  const {data:ok,error}=await sb.rpc("is_member");
+  if(error||ok!==true){setBanner("You're signed in as "+myId+", which isn't on the team list. Sign in with your Lumaril email, or ask a teammate to add you.");refresh();return;}
+  setBanner("");db=sb;canWrite=true;
+  await loadShared();
+  if(!team.has(myId)){const nm=(session.user.user_metadata&&session.user.user_metadata.full_name)||guessName(myId);const r=await sb.from("team").upsert({email:myId,name:nm}).select().single();if(!r.error)team.set(myId,r.data);}
+  subscribe();renderAuth();refresh();
+}
+function guessName(e){return String(e).split("@")[0].split(/[._-]+/).filter(Boolean).map(w=>w[0].toUpperCase()+w.slice(1)).join(" ");}
+const fromRow=r=>({owner:r.owner_email||null,status:r.status||"none",updatedAt:r.updated_at?Date.parse(r.updated_at):null,updatedBy:r.updated_by||null});
+function addNote(r){const n={id:r.id,fid:r.fid,text:r.body,by:(r.author_email||"").toLowerCase(),at:Date.parse(r.created_at)};if(!notesBy.has(n.fid))notesBy.set(n.fid,[]);const a=notesBy.get(n.fid);if(a.some(x=>x.id===n.id))return;a.push(n);a.sort((x,y)=>(y.at||0)-(x.at||0));}
+function dropNote(id){for(const [f,a] of notesBy){const i=a.findIndex(x=>x.id===id);if(i>=0){a.splice(i,1);if(!a.length)notesBy.delete(f);}}}
+async function loadShared(){
+  const timer=setTimeout(()=>setBanner("Shared assignments and notes are taking a while to load. They'll appear when the connection catches up."),10000);
+  const all=async q=>{let out=[],from=0;for(;;){const r=await q().range(from,from+999);if(r.error)return r;out=out.concat(r.data);if(r.data.length<1000)return{data:out};from+=1000;}};
+  const [t,n,m]=await Promise.all([all(()=>sb.from("tracking").select("*")),all(()=>sb.from("notes").select("*").order("created_at",{ascending:false})),sb.from("team").select("*").order("name")]);
+  clearTimeout(timer);clearBannerIfLoading();
+  const err=t.error||n.error||m.error;if(err){setBanner("Couldn't load shared data ("+err.message+"). Reload to try again.");return;}
+  tracking=new Map(t.data.map(r=>[r.fid,fromRow(r)]));
+  notesBy=new Map();for(const r of n.data)addNote(r);
+  team=new Map(m.data.map(r=>[r.email.toLowerCase(),r]));
+}
+let refreshTimer=null;
+function refreshSoon(){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{refresh();if(openId)renderNotes();},120);}
+function subscribe(){
+  channel=sb.channel("atlas")
+    .on("postgres_changes",{event:"*",schema:"public",table:"tracking"},p=>{if(p.eventType==="DELETE")tracking.delete(p.old.fid);else tracking.set(p.new.fid,fromRow(p.new));refreshSoon();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"notes"},p=>{if(p.eventType==="DELETE")dropNote(p.old.id);else addNote(p.new);refreshSoon();})
+    .on("postgres_changes",{event:"*",schema:"public",table:"team"},p=>{if(p.eventType==="DELETE")team.delete(String(p.old.email).toLowerCase());else team.set(p.new.email.toLowerCase(),p.new);refreshSoon();})
+    .subscribe();
+}
+function renderAuth(){
+  const el=$("auth");el.textContent="";if(!sb)return;
+  if(session){const s=document.createElement("span");s.textContent=nameOf(myId)+" · "+myId;const b=document.createElement("button");b.textContent="Sign out";b.onclick=()=>sb.auth.signOut();el.append(s,b);return;}
+  const f=document.createElement("form");const i=document.createElement("input");i.type="email";i.required=true;i.placeholder="you@lumaril.com";i.autocomplete="email";i.setAttribute("aria-label","Work email");
+  const b=document.createElement("button");b.className="primary";b.textContent="Email me a sign-in link";const h=document.createElement("span");h.className="hint";
+  f.onsubmit=async e=>{e.preventDefault();b.disabled=true;h.textContent="Sending…";const {error}=await sb.auth.signInWithOtp({email:i.value.trim(),options:{emailRedirectTo:location.origin+location.pathname}});b.disabled=false;h.textContent=error?"Couldn't send the link: "+error.message:"Check your inbox for the sign-in link.";};
+  f.append(i,b,h);el.append(f);
+}
+let bannerLoading=false;
+function setBanner(t){const b=$("banner");b.textContent=t;b.hidden=!t;bannerLoading=/taking a while/.test(t);}
+function clearBannerIfLoading(){if(bannerLoading){$("banner").hidden=true;bannerLoading=false;}}
+
+async function profiles(){return profileCache;}
+const tOf=id=>tracking.get(id)||{};
+const statusOf=id=>tOf(id).status||"none";
+
+// ---------- filters
+function initFilters(){
+  const states=[...new Set(ROWS.map(r=>r.state).filter(Boolean))].sort();
+  const fs=$("f-state");for(const s of states){const o=document.createElement("option");o.value=s;o.textContent=s+" ("+ROWS.filter(r=>r.state===s).length.toLocaleString()+")";fs.append(o);}
+  const st=$("f-status");for(const s of STATUSES){const o=document.createElement("option");o.value=s.k;o.textContent=s.label;st.append(o);}
+  const sr=$("f-src");SOURCES.forEach(s=>{const o=document.createElement("option");o.value=s.key;o.textContent=s.short||s.name;sr.append(o);});
+  const fk=$("f-kind");for(const s of KINDS){const o=document.createElement("option");o.value=s.k;o.textContent=s.label+" ("+ROWS.filter(r=>r.kind===s.k).length.toLocaleString()+")";fk.append(o);}
+  const p=loadPrefs();for(const k of FKEYS){if(p[k]!=null)$(k).value=p[k];$(k).addEventListener("input",()=>{shown=100;persist();refresh();});}
+  if(p.sortKey){sortKey=p.sortKey;sortDir=p.sortDir||-1;}
+  if(p.colorBy==="status")colorBy="status";
+  $("cb-kind").onclick=()=>{colorBy="kind";persist();renderLegend();drawPoints();};
+  $("cb-status").onclick=()=>{colorBy="status";persist();renderLegend();drawPoints();};
+  $("reset").onclick=()=>{for(const k of FKEYS)$(k).value="";shown=100;persist();refresh();};
+  document.querySelectorAll("th[data-sort]").forEach(th=>th.onclick=()=>{const k=th.dataset.sort;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=(k==="cap"?-1:1);}persist();refresh();});
+  $("morebtn").onclick=()=>{shown+=100;renderList();};
+  $("export").onclick=exportCsv;
+}
+const FKEYS=["q","f-state","f-status","f-owner","f-kind","f-src","f-cap"];
+function persist(){const p={};for(const k of FKEYS)p[k]=$(k).value;p.sortKey=sortKey;p.sortDir=sortDir;p.colorBy=colorBy;savePrefs(p);}
+function applyFilters(){
+  const q=$("q").value.trim().toLowerCase(), st=$("f-state").value, ss=$("f-status").value, ow=$("f-owner").value, src=$("f-src").value, cap=+$("f-cap").value||0, kd=$("f-kind").value;
+  const terms=q?q.split(/\s+/):[];
+  filtered=ROWS.filter(r=>{
+    if(st&&r.state!==st)return false;
+    if(kd&&r.kind!==kd)return false;
+    if(src&&!r.srcs.includes(src))return false;
+    if(cap&&!(r.cap>=cap))return false;
+    if(ss&&statusOf(r.id)!==ss)return false;
+    if(ow){const o=tOf(r.id).owner||null; if(ow==="__none"&&o)return false; if(ow==="__any"&&!o)return false; if(ow==="__me"&&(!myId||o!==myId))return false;}
+    for(const t of terms)if(!r._s.includes(t))return false;
+    return true;});
+  const order=Object.fromEntries(STATUSES.map((s,i)=>[s.k,i]));
+  const key={name:r=>(r.name||"").toLowerCase(),cap:r=>r.cap==null?-1:r.cap,status:r=>order[statusOf(r.id)],owner:r=>tOf(r.id).owner?((profileCache[tOf(r.id).owner]||{}).name||"~"):"~~",state:r=>r.state}[sortKey]||(r=>r.cap);
+  filtered.sort((a,b)=>{const x=key(a),y=key(b);return (x<y?-1:x>y?1:0)*sortDir||((a.name||"")<(b.name||"")?-1:1);});
+}
+
+// ---------- stats
+function renderStats(){
+  $("st-total").textContent=ROWS.length.toLocaleString();
+  $("st-states").textContent=new Set(ROWS.map(r=>r.state)).size;
+  const capSum=ROWS.reduce((s,r)=>s+(r.cap||0),0), capN=ROWS.filter(r=>r.cap).length;
+  $("st-cap").innerHTML="";$("st-cap").append(document.createTextNode((capSum/1e9).toFixed(2)+"B bu"));const sm=document.createElement("small");sm.textContent=capN.toLocaleString()+" sites report it";$("st-cap").append(sm);
+  let assigned=0,active=0;for(const [id,t] of tracking){if(!BYID.has(id))continue;if(t.owner)assigned++;if(ACTIVE.has(t.status))active++;}
+  $("st-assigned").textContent=db?assigned.toLocaleString():"–";
+  $("st-active").textContent=db?active.toLocaleString():"–";
+}
+
+// ---------- list
+async function renderList(){
+  const tb=$("tbody"); tb.textContent="";
+  const slice=filtered.slice(0,shown);
+  await profiles(slice.map(r=>tOf(r.id).owner));
+  $("listtitle").textContent=filtered.length.toLocaleString()+" of "+ROWS.length.toLocaleString()+" facilities";
+  const lbl={name:"name",cap:"capacity",status:"status",owner:"owner"}[sortKey]||sortKey;
+  $("sorthint").textContent="Sorted by "+lbl+(sortDir<0?" (high to low)":"");
+  if(!slice.length){const tr=document.createElement("tr");const td=document.createElement("td");td.colSpan=4;td.className="empty";td.textContent="No facilities match these filters.";tr.append(td);tb.append(tr);}
+  for(const r of slice){
+    const tr=document.createElement("tr");tr.className="row"+(r.id===openId?" sel":"");tr.tabIndex=0;
+    tr.onclick=()=>openDrawer(r.id);tr.onkeydown=e=>{if(e.key==="Enter")openDrawer(r.id);};
+    const c1=document.createElement("td");const n=document.createElement("div");n.className="nm";n.textContent=r.name||r.company||"(unnamed)";const l=document.createElement("div");l.className="loc";l.textContent=[r.city,r.state].filter(Boolean).join(", ")+(r.company&&r.company!==r.name?" · "+r.company:"");c1.append(n,l,kindTag(r.kind));
+    const c2=document.createElement("td");c2.className="num";c2.textContent=r.cap?fmt(r.cap):"—";
+    const c3=document.createElement("td");c3.append(pill(statusOf(r.id)));
+    const nn=(notesBy.get(r.id)||[]).length; if(nn){const s=document.createElement("div");s.className="loc";s.textContent=nn+(nn===1?" note":" notes");c3.append(s);}
+    const c4=document.createElement("td");const o=tOf(r.id).owner;
+    if(o){const p=profileCache[o]||{};const sp=document.createElement("span");sp.className="owner";if(p.avatarUrl){const im=document.createElement("img");im.src=p.avatarUrl;im.alt="";sp.append(im);}sp.append(document.createTextNode(p.name||"Someone"));c4.append(sp);}
+    else{const sp=document.createElement("span");sp.className="loc";sp.textContent="—";c4.append(sp);}
+    tr.append(c1,c2,c3,c4);tb.append(tr);
+  }
+  $("more").hidden=filtered.length<=shown;
+}
+function kindTag(k){const s=KMAP[k]||KMAP.other;const sp=document.createElement("div");sp.className="kindtag";const i=document.createElement("i");i.style.background="var("+s.v+")";sp.append(i,document.createTextNode(s.label));return sp;}
+function renderLegend(){const lg=$("legend");lg.textContent="";const set=colorBy==="kind"?KINDS:STATUSES;
+  for(const s of set){const sp=document.createElement("span");const i=document.createElement("i");i.style.background="var("+s.v+")";sp.append(i,document.createTextNode(s.label));lg.append(sp);}
+  $("cb-kind").setAttribute("aria-pressed",String(colorBy==="kind"));$("cb-status").setAttribute("aria-pressed",String(colorBy==="status"));}
+function renderKey(){const g=$("keygrid");g.textContent="";const cur=$("f-kind").value;
+  for(const s of KINDS){const n=ROWS.filter(r=>r.kind===s.k).length;const b=document.createElement("button");b.className="keyitem";b.setAttribute("aria-pressed",String(cur===s.k));
+    const i=document.createElement("i");i.style.background="var("+s.v+")";const t=document.createElement("div");t.className="t";const sp=document.createElement("span");sp.textContent=n.toLocaleString();t.append(document.createTextNode(s.label),sp);
+    const d=document.createElement("div");d.className="d";d.textContent=s.d;b.append(i,t,d);
+    b.onclick=()=>{$("f-kind").value=cur===s.k?"":s.k;shown=100;persist();refresh();};g.append(b);}}
+function pill(k){const s=SMAP[k]||SMAP.none;const sp=document.createElement("span");sp.className="pill";const i=document.createElement("i");i.style.background="var("+s.v+")";sp.append(i,document.createTextNode(s.label));return sp;}
+
+// ---------- map
+let proj, path, states, cv, ctx, W, H, dpr, pts=[], qt;
+async function initMap(){
+  const topo=await (await fetch("states-10m.json")).json();
+  states=topojson.feature(topo,topo.objects.states);
+  proj=d3.geoAlbersUsa().scale(1300).translate([487.5,305]);
+  path=d3.geoPath(proj);
+  const svg=d3.select("#mapsvg");
+  svg.append("g").selectAll("path").data(states.features).join("path").attr("d",path).attr("fill","var(--map-land)").attr("stroke","var(--map-line)").attr("stroke-width",1).attr("data-name",d=>d.properties.name);
+  svg.append("g").attr("id","selstate");
+  cv=$("mapcv");ctx=cv.getContext("2d");
+  new ResizeObserver(()=>sizeCanvas()).observe($("mapbox"));
+  sizeCanvas();
+  cv.addEventListener("mousemove",onHover);cv.addEventListener("mouseleave",()=>$("tip").hidden=true);cv.addEventListener("click",onClick);
+  renderLegend();
+}
+function sizeCanvas(){const b=$("mapbox").getBoundingClientRect();dpr=window.devicePixelRatio||1;W=b.width;H=b.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);drawPoints();}
+const STATE_NAMES={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",DC:"District of Columbia",PR:"Puerto Rico"};
+const NAME2AB=Object.fromEntries(Object.entries(STATE_NAMES).map(([a,n])=>[n,a]));
+function drawPoints(){
+  if(!ctx||!proj)return;
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  const k=W/975; pts=[];
+  const colors=Object.fromEntries(STATUSES.map(s=>[s.k,css(s.v)]));
+  const kcolors=Object.fromEntries(KINDS.map(s=>[s.k,css(s.v)]));
+  const base=css("--dot");
+  const korder={other:0,ccc:1,dealer:2,state:3,federal:4,export:5};
+  // draw unworked / smaller categories first, important ones on top
+  const list=filtered.slice().sort(colorBy==="kind"?(a,b)=>korder[a.kind]-korder[b.kind]:(a,b)=>(statusOf(a.id)==="none"?0:1)-(statusOf(b.id)==="none"?0:1));
+  let unmapped=0;
+  for(const r of list){
+    if(r.lat==null||r.lon==null){unmapped++;continue;}
+    const p=proj([r.lon,r.lat]); if(!p){unmapped++;continue;}
+    const x=p[0]*k,y=p[1]*k; const s=statusOf(r.id);
+    if(colorBy==="kind"){const worked=s!=="none";const rad=r.kind==="export"?3.6:worked?3.2:2.3;ctx.globalAlpha=.85;ctx.fillStyle=kcolors[r.kind]||base;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();}
+    else{const rad=s==="none"?2:3.6; ctx.globalAlpha=s==="none"?.55:.95;
+    ctx.fillStyle=s==="none"?base:colors[s];ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();}
+    if(r.id===openId){ctx.globalAlpha=1;ctx.strokeStyle=css("--grain");ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();}
+    pts.push({x,y,r});
+  }
+  ctx.globalAlpha=1;
+  qt=d3.quadtree(pts,d=>d.x,d=>d.y);
+  const st=$("f-state").value;
+  d3.select("#mapsvg").selectAll("path").attr("fill",d=>st&&NAME2AB[d.properties.name]===st?"color-mix(in srgb, var(--grain) 22%, var(--map-land))":"var(--map-land)");
+  $("maptitle").textContent=st?(STATE_NAMES[st]||st):"United States";
+  $("mapnote").textContent="Click a dot to open a facility, or a state to filter to it."+(unmapped?" "+unmapped.toLocaleString()+" facilities in this view have no map location yet; they're still in the list.":"");
+}
+function nearest(e){const b=cv.getBoundingClientRect();const x=e.clientX-b.left,y=e.clientY-b.top;const hit=qt&&qt.find(x,y,9);return {x,y,hit};}
+function onHover(e){const {x,y,hit}=nearest(e);const t=$("tip");if(hit){t.hidden=false;t.style.left=hit.x+"px";t.style.top=hit.y+"px";t.textContent=(hit.r.name||hit.r.company)+" · "+(hit.r.city||"")+", "+hit.r.state;}else t.hidden=true;}
+function onClick(e){const {x,y,hit}=nearest(e);if(hit){openDrawer(hit.r.id);return;}
+  const k=W/975;const ll=proj.invert([x/k,y/k]);if(!ll)return;const f=states.features.find(f=>d3.geoContains(f,ll));if(!f)return;const ab=NAME2AB[f.properties.name];if(!ab)return;
+  $("f-state").value=$("f-state").value===ab?"":ab;shown=100;persist();refresh();}
+
+// ---------- drawer
+function openDrawer(id){openId=id;const r=BYID.get(id);if(!r)return;
+  $("drawer").hidden=false;$("scrim").hidden=false;
+  $("d-name").textContent=r.name||r.company||"(unnamed)";
+  $("d-loc").textContent=[r.address,r.city,r.state,r.zip].filter(Boolean).join(", ");
+  renderDrawer();renderList();drawPoints();}
+function closeDrawer(){openId=null;$("drawer").hidden=true;$("scrim").hidden=true;$("d-hits").hidden=true;renderList();drawPoints();}
+$("d-close").onclick=closeDrawer;$("scrim").onclick=closeDrawer;document.addEventListener("keydown",e=>{if(e.key==="Escape"&&openId)closeDrawer();});
+function writable(){return !!db&&!!myId&&canWrite!==false;}
+async function renderDrawer(){
+  const r=BYID.get(openId);if(!r)return;const t=tOf(openId);
+  const g=$("d-status");g.textContent="";
+  for(const s of STATUSES){const b=document.createElement("button");b.setAttribute("aria-pressed",String((t.status||"none")===s.k));const i=document.createElement("i");i.style.background="var("+s.v+")";b.append(i,document.createTextNode(s.label));b.disabled=!writable();b.onclick=()=>saveTracking({status:s.k});g.append(b);}
+  const ow=$("d-owner");ow.textContent="";
+  if(t.owner){await profiles([t.owner]);const p=profileCache[t.owner]||{};if(p.avatarUrl){const im=document.createElement("img");im.src=p.avatarUrl;im.alt="";ow.append(im);}ow.append(document.createTextNode((p.name||"Someone")+(t.owner===myId?" (you)":"")));}
+  else ow.append(document.createTextNode("No one yet"));
+  if(t.updatedAt){await profiles([t.updatedBy]);const s=document.createElement("span");s.className="hint";s.textContent=" · updated "+ago(t.updatedAt)+((profileCache[t.updatedBy]||{}).name?" by "+profileCache[t.updatedBy].name:"");ow.append(s);}
+  for(const id of ["d-search","d-mine","d-unassign","d-text","d-add"])$(id).disabled=!writable();
+  $("d-unassign").hidden=!t.owner;
+  $("d-hint").textContent=writable()?"":"Sign in with your Lumaril email to add notes.";
+  const kv=$("d-kv");kv.textContent="";
+  const add=(k,v,node)=>{if(!v&&!node)return;const dt=document.createElement("dt");dt.textContent=k;const dd=document.createElement("dd");if(node)dd.append(node);else dd.textContent=v;kv.append(dt,dd);};
+  add("Company",r.company&&r.company!==r.name?r.company:"");add("Address",r.address);add("City",[r.city,r.state,r.zip].filter(Boolean).join(", "));add("County",r.county);
+  add("Capacity",r.cap?fmt(r.cap)+" bu":"");add("License type","",kindTag(r.kind));add("License",[r.license_type,r.license_number].filter(Boolean).join(" · "));add("Commodities",r.commodities);
+  add("Map location",r.lat!=null?({address:"Street address",zip:"ZIP code centroid",city:"Town centroid",county:"County centroid",source:"From source"}[r.geo]||"Approximate"):"Not mapped");
+  const sl=document.createElement("div");sl.className="src";r.srcs.forEach((k,i)=>{const s=SOURCES.find(x=>x.key===k);if(!s)return;if(i)sl.append(document.createElement("br"));const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.textContent=s.name;sl.append(a);if(s.date)sl.append(document.createTextNode(" ("+s.date+")"));});
+  add("Sources","",sl);
+  if(r.notes)add("Source notes",r.notes);
+  renderNotes();
+}
+async function renderNotes(){
+  const box=$("d-notes");box.textContent="";const list=notesBy.get(openId)||[];
+  if(!db){const p=document.createElement("div");p.className="hint";p.textContent="Sign in with your Lumaril email to see the team's notes.";box.append(p);return;}
+  if(!list.length){const p=document.createElement("div");p.className="hint";p.textContent="No notes yet. Add the first update below.";box.append(p);return;}
+  await profiles(list.map(n=>n.by));
+  for(const n of list){const d=document.createElement("div");d.className="note";const m=document.createElement("div");m.className="meta";const p=profileCache[n.by]||{};
+    if(p.avatarUrl){const im=document.createElement("img");im.src=p.avatarUrl;im.alt="";m.append(im);}
+    m.append(document.createTextNode((p.name||"Someone")+" · "+ago(n.at)));
+    if(n.by===myId&&writable()){const del=document.createElement("button");del.className="del";del.textContent="Delete";del.onclick=async()=>{if(del.dataset.confirm){const {error}=await db.from("notes").delete().eq("id",n.id);if(error)flash("Couldn't delete: "+error.message);else{dropNote(n.id);renderNotes();renderList();}}else{del.dataset.confirm="1";del.textContent="Click again to delete";}};m.append(del);}
+    const tx=document.createElement("p");tx.textContent=n.text;d.append(m,tx);box.append(d);}
+}
+function ago(ms){if(!ms)return"";const s=(Date.now()-ms)/1000;if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+" min ago";if(s<86400)return Math.floor(s/3600)+" h ago";if(s<86400*30)return Math.floor(s/86400)+" d ago";return new Date(ms).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});}
+function flash(t){$("d-hint").textContent=t;}
+let writing=false;
+async function saveTracking(patch){
+  if(!writable()||writing)return;writing=true;
+  const id=openId;const cur=tOf(id);const next={owner:cur.owner||null,status:cur.status||"none",...patch};
+  const prev=tracking.get(id);tracking.set(id,{...next,updatedAt:Date.now(),updatedBy:myId});refresh();
+  const {data,error}=await db.from("tracking").upsert({fid:id,owner_email:next.owner,status:next.status}).select().single();
+  if(error){if(prev)tracking.set(id,prev);else tracking.delete(id);flash("Couldn't save: "+error.message);refresh();}
+  else tracking.set(id,fromRow(data));
+  writing=false;if(openId===id)renderDrawer();
+}
+$("d-mine").onclick=()=>saveTracking({owner:myId,status:statusOf(openId)==="none"?"research":statusOf(openId)});
+$("d-unassign").onclick=()=>saveTracking({owner:null});
+$("d-search").addEventListener("focus",()=>runSearch(""));
+$("d-search").addEventListener("input",e=>runSearch(e.target.value));
+document.addEventListener("click",e=>{if(!$("d-picker").contains(e.target))$("d-hits").hidden=true;});
+function initials(n){return String(n||"?").split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();}
+async function runSearch(q){
+  if(!writable())return;const box=$("d-hits");box.textContent="";q=q.trim();const ql=q.toLowerCase();
+  const hits=[...team.values()].filter(t=>!ql||String(t.name).toLowerCase().includes(ql)||t.email.toLowerCase().includes(ql)).sort((a,b)=>String(a.name).localeCompare(b.name)).slice(0,25);
+  const assign=email=>{box.hidden=true;$("d-search").value="";saveTracking({owner:email,status:statusOf(openId)==="none"?"research":statusOf(openId)});};
+  for(const h of hits){const b=document.createElement("button");const av=document.createElement("span");av.className="av";av.textContent=initials(h.name);const em=document.createElement("span");em.className="em";em.textContent=h.email;
+    b.append(av,document.createTextNode(h.name+(h.email===myId?" (you)":"")),em);b.onclick=()=>assign(h.email);box.append(b);}
+  const isEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q);
+  if(isEmail&&!team.has(ql)){const b=document.createElement("button");b.textContent="Add "+ql+" to the team and assign";b.onclick=async()=>{const {data,error}=await db.from("team").upsert({email:ql,name:guessName(ql)}).select().single();if(error){flash("Couldn't add teammate: "+error.message);return;}team.set(ql,data);assign(ql);};box.append(b);}
+  if(!hits.length&&!isEmail){const d=document.createElement("div");d.className="hint";d.style.padding="8px 10px";d.textContent=q?"No teammates match. Type a full email address to add someone.":"No teammates yet. Type an email address to add one.";box.append(d);}
+  box.hidden=false;
+}
+$("d-add").onclick=async()=>{
+  const ta=$("d-text");const text=ta.value.trim();if(!text||!writable())return;if(text.length>4000){flash("Keep notes under 4,000 characters.");return;}
+  $("d-add").disabled=true;
+  const {data,error}=await db.from("notes").insert({fid:openId,body:text}).select().single();
+  if(error)flash("Couldn't add the note: "+error.message);
+  else{addNote(data);ta.value="";flash("Note added.");renderNotes();renderList();}
+  $("d-add").disabled=!writable();
+};
+
+// ---------- export
+async function exportCsv(){
+  const head=["id","facility_name","company","address","city","state","zip","county","capacity_bu","license_type","license_number","lat","lon","status","owner","last_note","sources"];
+  const q=v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  head.splice(9,0,"license_category");const lines=[head.join(",")];
+  for(const r of filtered){const t=tOf(r.id);const n=(notesBy.get(r.id)||[])[0];lines.push([r.id,r.name,r.company,r.address,r.city,r.state,r.zip,r.county,r.cap,(KMAP[r.kind]||{}).label,r.license_type,r.license_number,r.lat,r.lon,(SMAP[t.status||"none"]||{}).label,t.owner?((profileCache[t.owner]||{}).name||""):"",n?n.text:"",r.srcs.map(k=>(SOURCES.find(s=>s.key===k)||{}).name).join("; ")].map(q).join(","));}
+  const url=URL.createObjectURL(new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");a.href=url;a.download="grain-elevators.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+// ---------- footer
+function renderFooter(){const f=$("footer");f.textContent="";
+  const p=document.createElement("div");p.textContent="Inventory compiled "+(DATA.generated||"")+" from public records. Locations are licensed or federally approved grain storage sites; small private and on-farm bins aren't licensed and aren't included. Map positions marked approximate use town or ZIP centroids.";f.append(p);
+  const s=document.createElement("div");s.append(document.createTextNode("Sources: "));SOURCES.forEach((x,i)=>{if(i)s.append(document.createTextNode(" · "));const a=document.createElement("a");a.href=x.url;a.target="_blank";a.rel="noopener";a.textContent=(x.short||x.name)+" ("+x.count.toLocaleString()+")";s.append(a);});f.append(s);}
+
+function refresh(){applyFilters();renderStats();renderList();drawPoints();renderKey();if(openId)renderDrawer();}
+
+(async function start(){
+  try{await loadData();}catch(e){$("tbody").innerHTML="";const tr=document.createElement("tr");const td=document.createElement("td");td.colSpan=4;td.className="empty";td.textContent="The inventory file didn't load. Reload the page to try again.";tr.append(td);$("tbody").append(tr);return;}
+  initFilters();renderFooter();
+  try{await initMap();}catch(e){$("mapnote").textContent="The map couldn't load; the list below still works.";}
+  refresh();
+  $("export").hidden=false;
+  initBackend();
+})();
+})();
+</script>
+</body>
+</html>

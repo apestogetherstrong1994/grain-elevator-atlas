@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+.vercel/
+.env*
+pipeline/raw/
+pipeline/geo/
+supabase/*.local.sql
