@@ -124,6 +124,20 @@ for path in sorted(glob.glob(os.path.join(DATA, "*", "*.csv"))):
             r["_src"] = skey
             r["_file"] = os.path.basename(path)
             rows.append(r)
+# closed or suspended plants found during research (DATA/excluded.tsv: name_pattern, state, city, reason)
+EXCL = []
+_ex = os.path.join(DATA, "excluded.tsv")
+if os.path.exists(_ex):
+    with open(_ex, encoding="utf-8") as fh:
+        for e in csv.DictReader(fh, delimiter="\t"):
+            EXCL.append((re.compile(e["name_pattern"], re.I), e["state"], re.compile("^(" + e["city"] + ")$", re.I), e["reason"]))
+dropped = []
+kept = []
+for r in rows:
+    hit = next((e for e in EXCL if r["state"] == e[1] and e[2].match(r["city"]) and e[0].search(r["facility_name"] + " " + r["company"])), None)
+    (dropped if hit else kept).append(r)
+rows = kept
+print("excluded as closed", len(dropped), sorted({(r["facility_name"][:40], r["city"]) for r in dropped}), file=sys.stderr)
 print("input rows", len(rows), "sources", len(sources), file=sys.stderr)
 print("city fixes", dict(city_fixes), file=sys.stderr)
 

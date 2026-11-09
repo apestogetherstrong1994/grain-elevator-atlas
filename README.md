@@ -1,6 +1,11 @@
-# Grain Elevator Atlas
+# Facility Atlas (grain elevators and plastics recycling plants)
 
-A map and list of every licensed U.S. grain elevator and warehouse we could find in public federal and state records — about 7,200 facilities in 39 states. Each facility can be assigned to someone on the BD team, given a status, and annotated with notes that everyone on the team sees live.
+A map and list of U.S. industrial facilities built from public records, with a **Facility type** switcher at the top:
+
+- **Grain elevators:** every licensed grain elevator and warehouse in federal and state records, about 7,200 facilities in 39 states.
+- **Plastics recycling plants:** about 610 plants in 42 states that turn plastic scrap into regrind, flake, pellets or compounds (plants like Ultra-Poly in Portland, PA), plus chemical recyclers as their own category.
+
+Each facility can be assigned to someone on the BD team, given a status, and annotated with notes that everyone on the team sees live. Both types share one sign-in and one tracking table; plastics ids start with `PL-` so they never collide with grain ids. Link straight to a type with `?type=grain` or `?type=plastics`.
 
 - **Front end:** one static page (`public/index.html`) with d3 + TopoJSON for the map. No build step.
 - **Shared data:** [Supabase](https://supabase.com) for sign-in (email magic link), the `team`, `tracking` and `notes` tables, and realtime updates.
@@ -34,7 +39,24 @@ Optional: enable Google sign-in under **Authentication → Providers**. The page
 | CCC approved only | Approved to store USDA Commodity Credit Corporation grain, no warehouse license in our sources |
 | Type not given | Licensed, but the source doesn't say which license (mainly Indiana) |
 
-## Data
+## Plastics data
+
+`public/plastics.json` is built by `pipeline/scripts/merge_plastics.py` from `pipeline/plastics/*/*.csv`:
+
+| File | Sources |
+|---|---|
+| `national/national.csv` | EPA Recycling Infrastructure map (plastic recycling facilities layer), EPA Facility Registry Service and ECHO (filtered by NAICS and name), Beyond Plastics and NRDC chemical-recycling plant lists |
+| `industry/industry.csv` | NAPCOR PET reclaimer directory, APR certification list, company plant pages, trade press, ENF Recycling Directory (self-listed; leads, not verified) |
+| `east/east.csv` | NC DEQ Recycling Markets Directory, PA DEP plastic processors list, NERC-NEWMOA, RecyclingWorks MA, NY DEC, MD MDE |
+| `west/west.csv` | CalRecycle RMDZ directory and grant lists, Oregon DEQ responsible end markets list, WA Ecology, MN PCA, IA DNR, CO, NE, MO, MS |
+
+`pipeline/plastics/excluded.tsv` lists plants found to be closed or suspended; the merge drops them. Plant type comes from each source's description and resins: polyolefin reprocessor, PET reclaimer, mixed or engineering resins, advanced (chemical) recycling, or type not given.
+
+```bash
+python3 pipeline/scripts/merge_plastics.py pipeline/plastics public/plastics.json "Nov 9, 2026"
+```
+
+## Grain data
 
 `public/elevators.json` is built by `pipeline/scripts/merge.py` from the per-source CSVs in `pipeline/sources/`:
 
