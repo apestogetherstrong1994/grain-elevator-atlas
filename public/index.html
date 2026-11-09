@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Grain Elevator Atlas</title>
-<meta name="description" content="Every licensed U.S. grain elevator and warehouse from public federal and state records, with shared BD assignments and notes.">
+<title>Facility Atlas</title>
+<meta name="description" content="U.S. industrial facilities from public records (grain elevators, plastics recycling plants) with shared BD assignments and notes.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='9' y='6' width='6' height='22' fill='%23b57d12'/%3E%3Crect x='17' y='10' width='6' height='18' fill='%232c5f4a'/%3E%3Cpath d='M8 6l4-3 4 3z' fill='%23b57d12'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -34,7 +34,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1
 .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:18px 28px;max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 h1{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:clamp(26px,3.4vw,38px);letter-spacing:-.01em;margin:0;line-height:1;text-wrap:balance}
-h1 span{color:var(--grain)}
+h1 .hl{color:var(--grain)}
+.typesel{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.typesel select{font-size:15px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);padding:6px 10px;border:1px solid var(--ink)}
 .sub{color:var(--muted);margin:6px 0 0;max-width:70ch}
 .me{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
 .me img{width:24px;height:24px;border-radius:50%}
@@ -145,8 +147,9 @@ footer a{color:var(--muted)}
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Grain Elevator <span>Atlas</span></h1>
-      <p class="sub" id="subline">Every licensed grain elevator and warehouse we could find in public federal and state records, with a shared place to divide up outreach.</p>
+      <div class="typesel"><label for="f-type">Facility type</label><select id="f-type" aria-label="Facility type"></select></div>
+      <h1 id="h1"><span id="h1a">Grain Elevator</span> <span class="hl">Atlas</span></h1>
+      <p class="sub" id="subline"></p>
     </div>
     <div class="auth" id="auth"></div>
   </header>
@@ -162,7 +165,7 @@ footer a{color:var(--muted)}
   </section>
 
   <section class="filters" aria-label="Filters">
-    <input type="search" id="q" placeholder="Search name, company, city, county or license #" aria-label="Search">
+    <input type="search" id="q" placeholder="Search" aria-label="Search">
     <select id="f-state" aria-label="State"><option value="">All states</option></select>
     <select id="f-status" aria-label="Status"><option value="">Any status</option></select>
     <select id="f-owner" aria-label="Owner">
@@ -171,21 +174,16 @@ footer a{color:var(--muted)}
       <option value="__none">Unassigned</option>
       <option value="__any">Assigned to someone</option>
     </select>
-    <select id="f-kind" aria-label="License type"><option value="">All license types</option></select>
+    <select id="f-kind" aria-label="Type"><option value="">All types</option></select>
     <select id="f-src" aria-label="Source"><option value="">All sources</option></select>
-    <select id="f-cap" aria-label="Capacity">
-      <option value="">Any capacity</option>
-      <option value="1000000">1M+ bu</option>
-      <option value="5000000">5M+ bu</option>
-      <option value="10000000">10M+ bu</option>
-    </select>
+    <select id="f-cap" aria-label="Capacity"><option value="">Any capacity</option></select>
     <button id="reset">Clear filters</button>
     <button id="export" hidden>Export CSV</button>
   </section>
 
   <section class="main">
     <div class="card">
-      <div class="maphead"><b id="maptitle">Map</b><div class="maptools"><div class="legend" id="legend"></div><div class="colorby" role="group" aria-label="Color dots by"><button id="cb-kind" aria-pressed="true">License type</button><button id="cb-status" aria-pressed="false">Status</button></div></div></div>
+      <div class="maphead"><b id="maptitle">Map</b><div class="maptools"><div class="legend" id="legend"></div><div class="colorby" role="group" aria-label="Color dots by"><button id="cb-kind" aria-pressed="true">Type</button><button id="cb-status" aria-pressed="false">Status</button></div></div></div>
       <div class="mapbox" id="mapbox">
         <svg id="mapsvg" viewBox="0 0 975 610" aria-hidden="true"></svg>
         <canvas id="mapcv" aria-label="Map of facilities. Click a dot to open it, or a state to filter."></canvas>
@@ -199,7 +197,7 @@ footer a{color:var(--muted)}
         <table>
           <thead><tr>
             <th data-sort="name">Facility</th>
-            <th data-sort="cap" style="text-align:right">Bushels</th>
+            <th data-sort="cap" style="text-align:right" id="th-cap">Capacity</th>
             <th data-sort="status">Status</th>
             <th data-sort="owner">Owner</th>
           </tr></thead>
@@ -211,7 +209,7 @@ footer a{color:var(--muted)}
   </section>
 
   <section class="card key" aria-labelledby="keytitle">
-    <div class="keyhead"><b id="keytitle">License types</b><span class="hint">Colors match the map and list. Click a type to filter to it.</span></div>
+    <div class="keyhead"><b id="keytitle">Types</b><span class="hint">Colors match the map and list. Click a type to filter to it.</span></div>
     <div class="keygrid" id="keygrid"></div>
   </section>
 
@@ -269,15 +267,15 @@ const STATUSES=[
   {k:"visit",label:"Site visit",v:"--s-visit"},
   {k:"pilot",label:"Pilot",v:"--s-pilot"},
   {k:"nofit",label:"Not a fit",v:"--s-nofit"}];
-const KINDS=[
-  {k:"export",label:"Export elevator",v:"--k-export",d:"Port terminal that loads grain onto ships for export, from 2020–2026 operator, port and Army Corps records."},
-  {k:"federal",label:"Federal warehouse",v:"--k-federal",d:"Licensed by USDA under the U.S. Warehouse Act (USWA). Usually the larger elevators and terminals."},
-  {k:"state",label:"State warehouse",v:"--k-state",d:"Grain storage licensed and bonded by a state. Most country elevators fall here."},
-  {k:"dealer",label:"Dealer or buyer only",v:"--k-dealer",d:"Licensed to buy grain but not to store it for others. Can be an office or feedlot rather than an elevator."},
-  {k:"ccc",label:"CCC approved only",v:"--k-ccc",d:"Approved to store USDA Commodity Credit Corporation grain, with no warehouse license in our sources."},
-  {k:"other",label:"Type not given",v:"--k-other",d:"Source lists the site as licensed but doesn't say which license (mainly Indiana)."}];
-const KMAP=Object.fromEntries(KINDS.map(s=>[s.k,s]));
-function kindOf(t){
+const SMAP=Object.fromEntries(STATUSES.map(s=>[s.k,s]));
+const ACTIVE=new Set(["convo","visit","pilot"]);
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt=n=>n==null||n===""?"":Number(n).toLocaleString("en-US");
+const big=n=>n>=1e9?(n/1e9).toFixed(2)+"B":n>=1e6?(n/1e6).toFixed(1)+"M":Math.round(n).toLocaleString("en-US");
+
+// ---------- facility types: everything that differs between them lives here
+function grainKind(t){
   t=String(t||"").replace(/\(no [^)]*\)/gi,"");
   if(/export elevator/i.test(t))return"export";
   if(/USWA|Federal Warehouse/i.test(t))return"federal";
@@ -286,35 +284,70 @@ function kindOf(t){
   if(/dealer|buyer|handler|grain certificate/i.test(t))return"dealer";
   if(/CCC approved/i.test(t))return"ccc";
   return"other";}
-let colorBy="kind";
-const ACTIVE=new Set(["convo","visit","pilot"]);
-const SMAP=Object.fromEntries(STATUSES.map(s=>[s.k,s]));
-const $=id=>document.getElementById(id);
-const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const fmt=n=>n==null||n===""?"":Number(n).toLocaleString("en-US");
-const esc=s=>String(s??"");
+const DATASETS={
+  grain:{
+    label:"Grain elevators",file:"elevators.json",h1:"Grain Elevator",csv:"grain-elevators.csv",
+    sub:"Every licensed grain elevator and warehouse we could find in public federal and state records, with a shared place to divide up outreach.",
+    search:"Search name, company, city, county or license #",
+    kindWord:"License type",kindPlural:"License types",
+    kinds:[
+      {k:"export",label:"Export elevator",v:"--k-export",d:"Port terminal that loads grain onto ships for export, from 2020–2026 operator, port and Army Corps records."},
+      {k:"federal",label:"Federal warehouse",v:"--k-federal",d:"Licensed by USDA under the U.S. Warehouse Act (USWA). Usually the larger elevators and terminals."},
+      {k:"state",label:"State warehouse",v:"--k-state",d:"Grain storage licensed and bonded by a state. Most country elevators fall here."},
+      {k:"dealer",label:"Dealer or buyer only",v:"--k-dealer",d:"Licensed to buy grain but not to store it for others. Can be an office or feedlot rather than an elevator."},
+      {k:"ccc",label:"CCC approved only",v:"--k-ccc",d:"Approved to store USDA Commodity Credit Corporation grain, with no warehouse license in our sources."},
+      {k:"other",label:"Type not given",v:"--k-other",d:"Source lists the site as licensed but doesn't say which license (mainly Indiana)."}],
+    big:"export",kindOf:r=>grainKind(r.license_type),
+    capCol:"Bushels",capUnit:"bu",capStat:n=>(n/1e9).toFixed(2)+"B bu",capOpts:[[1e6,"1M+ bu"],[5e6,"5M+ bu"],[1e7,"10M+ bu"]],
+    searchFields:r=>[r.license_number],
+    record:(r,add)=>{add("License",[r.license_type,r.license_number].filter(Boolean).join(" · "));add("Commodities",r.commodities);},
+    csvCols:[["license_type",r=>r.license_type],["license_number",r=>r.license_number]],
+    footer:"Locations are licensed or federally approved grain storage sites; small private and on-farm bins aren't licensed and aren't included."},
+  plastics:{
+    hidden:true, // turned on once plastics.json is published
+    label:"Plastics recycling plants",file:"plastics.json",h1:"Plastics Recycling",csv:"plastics-recycling-plants.csv",
+    sub:"U.S. plants that turn plastic scrap into regrind, flake, pellets or compounds (plants like Ultra-Poly), from public federal, state and industry records.",
+    search:"Search name, company, city, county or resin",
+    kindWord:"Plant type",kindPlural:"Plant types",
+    kinds:[
+      {k:"po",label:"Polyolefin reprocessor",v:"--k-state",d:"Grinds, cleans and pelletizes PE and PP scrap (film, bottles, rigid, post-industrial). Ultra-Poly’s type."},
+      {k:"pet",label:"PET reclaimer",v:"--k-federal",d:"Turns PET bottles and thermoforms into clean flake or food-grade pellets."},
+      {k:"mixed",label:"Mixed or engineering resins",v:"--k-dealer",d:"Reprocesses or compounds several resins, or engineering plastics such as ABS, nylon, PC, PS or PVC."},
+      {k:"chem",label:"Advanced (chemical) recycling",v:"--k-export",d:"Breaks plastic down chemically (pyrolysis, depolymerization, solvent purification) instead of melting it."},
+      {k:"other",label:"Type not given",v:"--k-other",d:"Listed as a plastics recycler or processor, but our sources don't say which resins or process."}],
+    big:"chem",kindOf:r=>r.kind||"other",
+    capCol:"Lb / yr",capUnit:"lb/yr",capStat:n=>big(n)+" lb/yr",capOpts:[[1e7,"10M+ lb/yr"],[5e7,"50M+ lb/yr"],[1e8,"100M+ lb/yr"]],
+    searchFields:r=>[r.materials,r.processes,r.feedstock],
+    record:(r,add)=>{add("Resins",r.materials);add("Feedstock",r.feedstock);add("Processes",r.processes);},
+    csvCols:[["resins",r=>r.materials],["feedstock",r=>r.feedstock],["processes",r=>r.processes]],
+    footer:"Plants that process plastic scrap into regrind, flake, pellets or compounds, plus chemical recyclers. Sorting-only MRFs, collection sites and pure brokers are excluded."}
+};
+let typeKey="grain", DS=DATASETS.grain, KINDS=DS.kinds, KMAP={};
 
 let DATA=null, ROWS=[], BYID=new Map(), SOURCES=[];
-let tracking=new Map(); // fid -> {owner,status,updatedAt,updatedBy}
+const CACHE={};
+let tracking=new Map(); // fid -> {owner,status,updatedAt,updatedBy}; one table for every facility type
 let notesBy=new Map();  // fid -> [{id,text,by,at}]
 let db=null, myId=null, canWrite=null;            // db is the Supabase client once the viewer is a signed-in team member
 let sb=null, session=null, channel=null, team=new Map(); // team: email -> {email,name}
-let filtered=[], shown=100, sortKey="cap", sortDir=-1, openId=null;
+let filtered=[], shown=100, sortKey="cap", sortDir=-1, openId=null, colorBy="kind";
 const nameOf=e=>{if(!e)return"";const t=team.get(String(e).toLowerCase());return t&&t.name?t.name:String(e).split("@")[0];};
 const profileCache=new Proxy({},{get:(_,k)=>typeof k==="string"&&k.includes("@")?{name:nameOf(k)}:undefined,set:()=>true});
 
-// ---------- persistence of view prefs (per viewer only)
-function loadPrefs(){try{return JSON.parse(localStorage.getItem("gea-prefs")||"{}")}catch(e){return{}}}
-function savePrefs(p){try{localStorage.setItem("gea-prefs",JSON.stringify(p))}catch(e){}}
+// ---------- persistence of view prefs (per viewer, per facility type)
+function loadPrefs(){try{return JSON.parse(localStorage.getItem("gea-prefs-"+typeKey)||localStorage.getItem(typeKey==="grain"?"gea-prefs":"_none")||"{}")}catch(e){return{}}}
+function savePrefs(p){try{localStorage.setItem("gea-prefs-"+typeKey,JSON.stringify(p));localStorage.setItem("gea-type",typeKey)}catch(e){}}
 
 // ---------- data
 async function loadData(){
-  const r=await fetch("elevators.json"); if(!r.ok) throw new Error("data "+r.status);
-  DATA=await r.json(); SOURCES=DATA.sources;
-  const C=DATA.cols; const ix=Object.fromEntries(C.map((c,i)=>[c,i]));
-  ROWS=DATA.rows.map(a=>{const o={};for(const c of C)o[c]=a[ix[c]];o.srcs=(o.src||"").split("|").filter(Boolean);o.kind=kindOf(o.license_type);
-    o._s=[o.name,o.company,o.city,o.county,o.state,o.license_number,o.zip].join(" ").toLowerCase();return o;});
-  for(const r of ROWS)BYID.set(r.id,r);
+  if(!CACHE[typeKey]){
+    const r=await fetch(DS.file); if(!r.ok) throw new Error("data "+r.status);
+    const d=await r.json();const C=d.cols;const ix=Object.fromEntries(C.map((c,i)=>[c,i]));
+    const rows=d.rows.map(a=>{const o={};for(const c of C)o[c]=a[ix[c]];o.srcs=(o.src||"").split("|").filter(Boolean);o.kind=DS.kindOf(o);
+      o._s=[o.name,o.company,o.city,o.county,o.state,o.zip,...DS.searchFields(o)].join(" ").toLowerCase();return o;});
+    CACHE[typeKey]={d,rows,byid:new Map(rows.map(r=>[r.id,r]))};
+  }
+  const c=CACHE[typeKey];DATA=c.d;SOURCES=DATA.sources;ROWS=c.rows;BYID=c.byid;
 }
 
 // ---------- shared backend (Supabase: magic-link sign-in, team / tracking / notes tables, realtime)
@@ -372,20 +405,19 @@ let bannerLoading=false;
 function setBanner(t){const b=$("banner");b.textContent=t;b.hidden=!t;bannerLoading=/taking a while/.test(t);}
 function clearBannerIfLoading(){if(bannerLoading){$("banner").hidden=true;bannerLoading=false;}}
 
-async function profiles(){return profileCache;}
 const tOf=id=>tracking.get(id)||{};
 const statusOf=id=>tOf(id).status||"none";
 
 // ---------- filters
-function initFilters(){
-  const states=[...new Set(ROWS.map(r=>r.state).filter(Boolean))].sort();
-  const fs=$("f-state");for(const s of states){const o=document.createElement("option");o.value=s;o.textContent=s+" ("+ROWS.filter(r=>r.state===s).length.toLocaleString()+")";fs.append(o);}
-  const st=$("f-status");for(const s of STATUSES){const o=document.createElement("option");o.value=s.k;o.textContent=s.label;st.append(o);}
-  const sr=$("f-src");SOURCES.forEach(s=>{const o=document.createElement("option");o.value=s.key;o.textContent=s.short||s.name;sr.append(o);});
-  const fk=$("f-kind");for(const s of KINDS){const o=document.createElement("option");o.value=s.k;o.textContent=s.label+" ("+ROWS.filter(r=>r.kind===s.k).length.toLocaleString()+")";fk.append(o);}
-  const p=loadPrefs();for(const k of FKEYS){if(p[k]!=null)$(k).value=p[k];$(k).addEventListener("input",()=>{shown=100;persist();refresh();});}
-  if(p.sortKey){sortKey=p.sortKey;sortDir=p.sortDir||-1;}
-  if(p.colorBy==="status")colorBy="status";
+const FKEYS=["q","f-state","f-status","f-owner","f-kind","f-src","f-cap"];
+function opt(sel,v,t){const o=document.createElement("option");o.value=v;o.textContent=t;sel.append(o);}
+function resetSelect(id,first){const s=$(id);s.textContent="";opt(s,"",first);return s;}
+function initControls(){
+  const ft=$("f-type");for(const [k,d] of Object.entries(DATASETS))if(!d.hidden)opt(ft,k,d.label);
+  ft.closest(".typesel").hidden=ft.options.length<2;
+  ft.addEventListener("input",()=>switchType(ft.value));
+  const st=$("f-status");for(const s of STATUSES)opt(st,s.k,s.label);
+  for(const k of FKEYS)$(k).addEventListener("input",()=>{shown=100;persist();refresh();});
   $("cb-kind").onclick=()=>{colorBy="kind";persist();renderLegend();drawPoints();};
   $("cb-status").onclick=()=>{colorBy="status";persist();renderLegend();drawPoints();};
   $("reset").onclick=()=>{for(const k of FKEYS)$(k).value="";shown=100;persist();refresh();};
@@ -393,7 +425,15 @@ function initFilters(){
   $("morebtn").onclick=()=>{shown+=100;renderList();};
   $("export").onclick=exportCsv;
 }
-const FKEYS=["q","f-state","f-status","f-owner","f-kind","f-src","f-cap"];
+function populateFilters(){
+  const fs=resetSelect("f-state","All states");
+  for(const s of [...new Set(ROWS.map(r=>r.state).filter(Boolean))].sort())opt(fs,s,s+" ("+ROWS.filter(r=>r.state===s).length.toLocaleString()+")");
+  const sr=resetSelect("f-src","All sources");SOURCES.forEach(s=>opt(sr,s.key,s.short||s.name));
+  const fk=resetSelect("f-kind","All "+DS.kindPlural.toLowerCase());for(const s of KINDS)opt(fk,s.k,s.label+" ("+ROWS.filter(r=>r.kind===s.k).length.toLocaleString()+")");
+  const fc=resetSelect("f-cap","Any capacity");for(const [v,t] of DS.capOpts)opt(fc,String(v),t);
+  const p=loadPrefs();for(const k of FKEYS){$(k).value=p[k]!=null?p[k]:"";if($(k).value!==(p[k]||""))$(k).value="";}
+  sortKey=p.sortKey||"cap";sortDir=p.sortDir||-1;colorBy=p.colorBy==="status"?"status":"kind";
+}
 function persist(){const p={};for(const k of FKEYS)p[k]=$(k).value;p.sortKey=sortKey;p.sortDir=sortDir;p.colorBy=colorBy;savePrefs(p);}
 function applyFilters(){
   const q=$("q").value.trim().toLowerCase(), st=$("f-state").value, ss=$("f-status").value, ow=$("f-owner").value, src=$("f-src").value, cap=+$("f-cap").value||0, kd=$("f-kind").value;
@@ -408,8 +448,27 @@ function applyFilters(){
     for(const t of terms)if(!r._s.includes(t))return false;
     return true;});
   const order=Object.fromEntries(STATUSES.map((s,i)=>[s.k,i]));
-  const key={name:r=>(r.name||"").toLowerCase(),cap:r=>r.cap==null?-1:r.cap,status:r=>order[statusOf(r.id)],owner:r=>tOf(r.id).owner?((profileCache[tOf(r.id).owner]||{}).name||"~"):"~~",state:r=>r.state}[sortKey]||(r=>r.cap);
+  const key={name:r=>(r.name||"").toLowerCase(),cap:r=>r.cap==null?-1:r.cap,status:r=>order[statusOf(r.id)],owner:r=>tOf(r.id).owner?nameOf(tOf(r.id).owner):"~~",state:r=>r.state}[sortKey]||(r=>r.cap);
   filtered.sort((a,b)=>{const x=key(a),y=key(b);return (x<y?-1:x>y?1:0)*sortDir||((a.name||"")<(b.name||"")?-1:1);});
+}
+
+// ---------- page chrome for the current type
+function applyType(){
+  KINDS=DS.kinds;KMAP=Object.fromEntries(KINDS.map(s=>[s.k,s]));
+  $("h1a").textContent=DS.h1;document.title=DS.h1+" Atlas";$("subline").textContent=DS.sub;$("q").placeholder=DS.search;
+  $("th-cap").textContent=DS.capCol;$("keytitle").textContent=DS.kindPlural;$("cb-kind").textContent=DS.kindWord;
+  $("f-type").value=typeKey;
+}
+async function switchType(k){
+  if(!DATASETS[k]||DATASETS[k].hidden)k="grain";
+  if(openId)closeDrawer();
+  typeKey=k;DS=DATASETS[k];
+  try{const u=new URL(location.href);u.searchParams.set("type",k);history.replaceState(null,"",u);}catch(e){}
+  applyType();
+  $("tbody").innerHTML='<tr><td colspan="4" class="empty">Loading the inventory…</td></tr>';
+  try{await loadData();}catch(e){$("tbody").innerHTML="";const tr=document.createElement("tr");const td=document.createElement("td");td.colSpan=4;td.className="empty";td.textContent="The inventory file didn't load. Reload the page to try again.";tr.append(td);$("tbody").append(tr);return false;}
+  populateFilters();renderFooter();renderLegend();shown=100;refresh();savePrefs(Object.assign(loadPrefs(),{}));
+  return true;
 }
 
 // ---------- stats
@@ -417,17 +476,16 @@ function renderStats(){
   $("st-total").textContent=ROWS.length.toLocaleString();
   $("st-states").textContent=new Set(ROWS.map(r=>r.state)).size;
   const capSum=ROWS.reduce((s,r)=>s+(r.cap||0),0), capN=ROWS.filter(r=>r.cap).length;
-  $("st-cap").innerHTML="";$("st-cap").append(document.createTextNode((capSum/1e9).toFixed(2)+"B bu"));const sm=document.createElement("small");sm.textContent=capN.toLocaleString()+" sites report it";$("st-cap").append(sm);
+  $("st-cap").innerHTML="";$("st-cap").append(document.createTextNode(capN?DS.capStat(capSum):"—"));const sm=document.createElement("small");sm.textContent=capN.toLocaleString()+" sites report it";$("st-cap").append(sm);
   let assigned=0,active=0;for(const [id,t] of tracking){if(!BYID.has(id))continue;if(t.owner)assigned++;if(ACTIVE.has(t.status))active++;}
   $("st-assigned").textContent=db?assigned.toLocaleString():"–";
   $("st-active").textContent=db?active.toLocaleString():"–";
 }
 
 // ---------- list
-async function renderList(){
+function renderList(){
   const tb=$("tbody"); tb.textContent="";
   const slice=filtered.slice(0,shown);
-  await profiles(slice.map(r=>tOf(r.id).owner));
   $("listtitle").textContent=filtered.length.toLocaleString()+" of "+ROWS.length.toLocaleString()+" facilities";
   const lbl={name:"name",cap:"capacity",status:"status",owner:"owner"}[sortKey]||sortKey;
   $("sorthint").textContent="Sorted by "+lbl+(sortDir<0?" (high to low)":"");
@@ -440,7 +498,7 @@ async function renderList(){
     const c3=document.createElement("td");c3.append(pill(statusOf(r.id)));
     const nn=(notesBy.get(r.id)||[]).length; if(nn){const s=document.createElement("div");s.className="loc";s.textContent=nn+(nn===1?" note":" notes");c3.append(s);}
     const c4=document.createElement("td");const o=tOf(r.id).owner;
-    if(o){const p=profileCache[o]||{};const sp=document.createElement("span");sp.className="owner";if(p.avatarUrl){const im=document.createElement("img");im.src=p.avatarUrl;im.alt="";sp.append(im);}sp.append(document.createTextNode(p.name||"Someone"));c4.append(sp);}
+    if(o){const sp=document.createElement("span");sp.className="owner";sp.append(document.createTextNode(nameOf(o)||"Someone"));c4.append(sp);}
     else{const sp=document.createElement("span");sp.className="loc";sp.textContent="—";c4.append(sp);}
     tr.append(c1,c2,c3,c4);tb.append(tr);
   }
@@ -466,7 +524,6 @@ async function initMap(){
   path=d3.geoPath(proj);
   const svg=d3.select("#mapsvg");
   svg.append("g").selectAll("path").data(states.features).join("path").attr("d",path).attr("fill","var(--map-land)").attr("stroke","var(--map-line)").attr("stroke-width",1).attr("data-name",d=>d.properties.name);
-  svg.append("g").attr("id","selstate");
   cv=$("mapcv");ctx=cv.getContext("2d");
   new ResizeObserver(()=>sizeCanvas()).observe($("mapbox"));
   sizeCanvas();
@@ -483,16 +540,17 @@ function drawPoints(){
   const colors=Object.fromEntries(STATUSES.map(s=>[s.k,css(s.v)]));
   const kcolors=Object.fromEntries(KINDS.map(s=>[s.k,css(s.v)]));
   const base=css("--dot");
-  const korder={other:0,ccc:1,dealer:2,state:3,federal:4,export:5};
-  // draw unworked / smaller categories first, important ones on top
-  const list=filtered.slice().sort(colorBy==="kind"?(a,b)=>korder[a.kind]-korder[b.kind]:(a,b)=>(statusOf(a.id)==="none"?0:1)-(statusOf(b.id)==="none"?0:1));
+  const korder=Object.fromEntries(KINDS.map((s,i)=>[s.k,KINDS.length-i]));
+  // draw the less important categories first, so the first-listed ones sit on top
+  const list=filtered.slice().sort(colorBy==="kind"?(a,b)=>(korder[a.kind]||0)-(korder[b.kind]||0):(a,b)=>(statusOf(a.id)==="none"?0:1)-(statusOf(b.id)==="none"?0:1));
   let unmapped=0;
+  const rbase=ROWS.length>3000?2.3:3.2;
   for(const r of list){
     if(r.lat==null||r.lon==null){unmapped++;continue;}
     const p=proj([r.lon,r.lat]); if(!p){unmapped++;continue;}
     const x=p[0]*k,y=p[1]*k; const s=statusOf(r.id);
-    if(colorBy==="kind"){const worked=s!=="none";const rad=r.kind==="export"?3.6:worked?3.2:2.3;ctx.globalAlpha=.85;ctx.fillStyle=kcolors[r.kind]||base;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();}
-    else{const rad=s==="none"?2:3.6; ctx.globalAlpha=s==="none"?.55:.95;
+    if(colorBy==="kind"){const worked=s!=="none";const rad=r.kind===DS.big?3.6:worked?3.4:rbase;ctx.globalAlpha=.85;ctx.fillStyle=kcolors[r.kind]||base;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();}
+    else{const rad=s==="none"?rbase-.3:3.6; ctx.globalAlpha=s==="none"?.55:.95;
     ctx.fillStyle=s==="none"?base:colors[s];ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();}
     if(r.id===openId){ctx.globalAlpha=1;ctx.strokeStyle=css("--grain");ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();}
     pts.push({x,y,r});
@@ -505,7 +563,7 @@ function drawPoints(){
   $("mapnote").textContent="Click a dot to open a facility, or a state to filter to it."+(unmapped?" "+unmapped.toLocaleString()+" facilities in this view have no map location yet; they're still in the list.":"");
 }
 function nearest(e){const b=cv.getBoundingClientRect();const x=e.clientX-b.left,y=e.clientY-b.top;const hit=qt&&qt.find(x,y,9);return {x,y,hit};}
-function onHover(e){const {x,y,hit}=nearest(e);const t=$("tip");if(hit){t.hidden=false;t.style.left=hit.x+"px";t.style.top=hit.y+"px";t.textContent=(hit.r.name||hit.r.company)+" · "+(hit.r.city||"")+", "+hit.r.state;}else t.hidden=true;}
+function onHover(e){const {hit}=nearest(e);const t=$("tip");if(hit){t.hidden=false;t.style.left=hit.x+"px";t.style.top=hit.y+"px";t.textContent=(hit.r.name||hit.r.company)+" · "+(hit.r.city||"")+", "+hit.r.state;}else t.hidden=true;}
 function onClick(e){const {x,y,hit}=nearest(e);if(hit){openDrawer(hit.r.id);return;}
   const k=W/975;const ll=proj.invert([x/k,y/k]);if(!ll)return;const f=states.features.find(f=>d3.geoContains(f,ll));if(!f)return;const ab=NAME2AB[f.properties.name];if(!ab)return;
   $("f-state").value=$("f-state").value===ab?"":ab;shown=100;persist();refresh();}
@@ -519,35 +577,33 @@ function openDrawer(id){openId=id;const r=BYID.get(id);if(!r)return;
 function closeDrawer(){openId=null;$("drawer").hidden=true;$("scrim").hidden=true;$("d-hits").hidden=true;renderList();drawPoints();}
 $("d-close").onclick=closeDrawer;$("scrim").onclick=closeDrawer;document.addEventListener("keydown",e=>{if(e.key==="Escape"&&openId)closeDrawer();});
 function writable(){return !!db&&!!myId&&canWrite!==false;}
-async function renderDrawer(){
+function renderDrawer(){
   const r=BYID.get(openId);if(!r)return;const t=tOf(openId);
   const g=$("d-status");g.textContent="";
   for(const s of STATUSES){const b=document.createElement("button");b.setAttribute("aria-pressed",String((t.status||"none")===s.k));const i=document.createElement("i");i.style.background="var("+s.v+")";b.append(i,document.createTextNode(s.label));b.disabled=!writable();b.onclick=()=>saveTracking({status:s.k});g.append(b);}
   const ow=$("d-owner");ow.textContent="";
-  if(t.owner){await profiles([t.owner]);const p=profileCache[t.owner]||{};if(p.avatarUrl){const im=document.createElement("img");im.src=p.avatarUrl;im.alt="";ow.append(im);}ow.append(document.createTextNode((p.name||"Someone")+(t.owner===myId?" (you)":"")));}
+  if(t.owner)ow.append(document.createTextNode((nameOf(t.owner)||"Someone")+(t.owner===myId?" (you)":"")));
   else ow.append(document.createTextNode("No one yet"));
-  if(t.updatedAt){await profiles([t.updatedBy]);const s=document.createElement("span");s.className="hint";s.textContent=" · updated "+ago(t.updatedAt)+((profileCache[t.updatedBy]||{}).name?" by "+profileCache[t.updatedBy].name:"");ow.append(s);}
+  if(t.updatedAt){const s=document.createElement("span");s.className="hint";s.textContent=" · updated "+ago(t.updatedAt)+(t.updatedBy?" by "+nameOf(t.updatedBy):"");ow.append(s);}
   for(const id of ["d-search","d-mine","d-unassign","d-text","d-add"])$(id).disabled=!writable();
   $("d-unassign").hidden=!t.owner;
   $("d-hint").textContent=writable()?"":"Sign in with your Lumaril email to add notes.";
   const kv=$("d-kv");kv.textContent="";
   const add=(k,v,node)=>{if(!v&&!node)return;const dt=document.createElement("dt");dt.textContent=k;const dd=document.createElement("dd");if(node)dd.append(node);else dd.textContent=v;kv.append(dt,dd);};
   add("Company",r.company&&r.company!==r.name?r.company:"");add("Address",r.address);add("City",[r.city,r.state,r.zip].filter(Boolean).join(", "));add("County",r.county);
-  add("Capacity",r.cap?fmt(r.cap)+" bu":"");add("License type","",kindTag(r.kind));add("License",[r.license_type,r.license_number].filter(Boolean).join(" · "));add("Commodities",r.commodities);
+  add("Capacity",r.cap?fmt(r.cap)+" "+DS.capUnit:"");add(DS.kindWord,"",kindTag(r.kind));DS.record(r,add);
   add("Map location",r.lat!=null?({address:"Street address",zip:"ZIP code centroid",city:"Town centroid",county:"County centroid",source:"From source"}[r.geo]||"Approximate"):"Not mapped");
   const sl=document.createElement("div");sl.className="src";r.srcs.forEach((k,i)=>{const s=SOURCES.find(x=>x.key===k);if(!s)return;if(i)sl.append(document.createElement("br"));const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.textContent=s.name;sl.append(a);if(s.date)sl.append(document.createTextNode(" ("+s.date+")"));});
   add("Sources","",sl);
   if(r.notes)add("Source notes",r.notes);
   renderNotes();
 }
-async function renderNotes(){
+function renderNotes(){
   const box=$("d-notes");box.textContent="";const list=notesBy.get(openId)||[];
   if(!db){const p=document.createElement("div");p.className="hint";p.textContent="Sign in with your Lumaril email to see the team's notes.";box.append(p);return;}
   if(!list.length){const p=document.createElement("div");p.className="hint";p.textContent="No notes yet. Add the first update below.";box.append(p);return;}
-  await profiles(list.map(n=>n.by));
-  for(const n of list){const d=document.createElement("div");d.className="note";const m=document.createElement("div");m.className="meta";const p=profileCache[n.by]||{};
-    if(p.avatarUrl){const im=document.createElement("img");im.src=p.avatarUrl;im.alt="";m.append(im);}
-    m.append(document.createTextNode((p.name||"Someone")+" · "+ago(n.at)));
+  for(const n of list){const d=document.createElement("div");d.className="note";const m=document.createElement("div");m.className="meta";
+    m.append(document.createTextNode((nameOf(n.by)||"Someone")+" · "+ago(n.at)));
     if(n.by===myId&&writable()){const del=document.createElement("button");del.className="del";del.textContent="Delete";del.onclick=async()=>{if(del.dataset.confirm){const {error}=await db.from("notes").delete().eq("id",n.id);if(error)flash("Couldn't delete: "+error.message);else{dropNote(n.id);renderNotes();renderList();}}else{del.dataset.confirm="1";del.textContent="Click again to delete";}};m.append(del);}
     const tx=document.createElement("p");tx.textContent=n.text;d.append(m,tx);box.append(d);}
 }
@@ -569,7 +625,7 @@ $("d-search").addEventListener("focus",()=>runSearch(""));
 $("d-search").addEventListener("input",e=>runSearch(e.target.value));
 document.addEventListener("click",e=>{if(!$("d-picker").contains(e.target))$("d-hits").hidden=true;});
 function initials(n){return String(n||"?").split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();}
-async function runSearch(q){
+function runSearch(q){
   if(!writable())return;const box=$("d-hits");box.textContent="";q=q.trim();const ql=q.toLowerCase();
   const hits=[...team.values()].filter(t=>!ql||String(t.name).toLowerCase().includes(ql)||t.email.toLowerCase().includes(ql)).sort((a,b)=>String(a.name).localeCompare(b.name)).slice(0,25);
   const assign=email=>{box.hidden=true;$("d-search").value="";saveTracking({owner:email,status:statusOf(openId)==="none"?"research":statusOf(openId)});};
@@ -590,27 +646,28 @@ $("d-add").onclick=async()=>{
 };
 
 // ---------- export
-async function exportCsv(){
-  const head=["id","facility_name","company","address","city","state","zip","county","capacity_bu","license_type","license_number","lat","lon","status","owner","last_note","sources"];
+function exportCsv(){
+  const extra=DS.csvCols;
+  const head=["id","facility_name","company","address","city","state","zip","county","capacity_"+DS.capUnit.replace("/","_per_"),"category",...extra.map(c=>c[0]),"lat","lon","status","owner","last_note","sources"];
   const q=v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  head.splice(9,0,"license_category");const lines=[head.join(",")];
-  for(const r of filtered){const t=tOf(r.id);const n=(notesBy.get(r.id)||[])[0];lines.push([r.id,r.name,r.company,r.address,r.city,r.state,r.zip,r.county,r.cap,(KMAP[r.kind]||{}).label,r.license_type,r.license_number,r.lat,r.lon,(SMAP[t.status||"none"]||{}).label,t.owner?((profileCache[t.owner]||{}).name||""):"",n?n.text:"",r.srcs.map(k=>(SOURCES.find(s=>s.key===k)||{}).name).join("; ")].map(q).join(","));}
+  const lines=[head.join(",")];
+  for(const r of filtered){const t=tOf(r.id);const n=(notesBy.get(r.id)||[])[0];lines.push([r.id,r.name,r.company,r.address,r.city,r.state,r.zip,r.county,r.cap,(KMAP[r.kind]||{}).label,...extra.map(c=>c[1](r)),r.lat,r.lon,(SMAP[t.status||"none"]||{}).label,t.owner?nameOf(t.owner):"",n?n.text:"",r.srcs.map(k=>(SOURCES.find(s=>s.key===k)||{}).name).join("; ")].map(q).join(","));}
   const url=URL.createObjectURL(new Blob(["﻿"+lines.join("\n")],{type:"text/csv;charset=utf-8"}));
-  const a=document.createElement("a");a.href=url;a.download="grain-elevators.csv";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  const a=document.createElement("a");a.href=url;a.download=DS.csv;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
 // ---------- footer
 function renderFooter(){const f=$("footer");f.textContent="";
-  const p=document.createElement("div");p.textContent="Inventory compiled "+(DATA.generated||"")+" from public records. Locations are licensed or federally approved grain storage sites; small private and on-farm bins aren't licensed and aren't included. Map positions marked approximate use town or ZIP centroids.";f.append(p);
+  const p=document.createElement("div");p.textContent="Inventory compiled "+(DATA.generated||"")+" from public records. "+DS.footer+" Map positions marked approximate use town or ZIP centroids.";f.append(p);
   const s=document.createElement("div");s.append(document.createTextNode("Sources: "));SOURCES.forEach((x,i)=>{if(i)s.append(document.createTextNode(" · "));const a=document.createElement("a");a.href=x.url;a.target="_blank";a.rel="noopener";a.textContent=(x.short||x.name)+" ("+x.count.toLocaleString()+")";s.append(a);});f.append(s);}
 
-function refresh(){applyFilters();renderStats();renderList();drawPoints();renderKey();if(openId)renderDrawer();}
+function refresh(){if(!ROWS)return;applyFilters();renderStats();renderList();drawPoints();renderKey();if(openId)renderDrawer();}
 
 (async function start(){
-  try{await loadData();}catch(e){$("tbody").innerHTML="";const tr=document.createElement("tr");const td=document.createElement("td");td.colSpan=4;td.className="empty";td.textContent="The inventory file didn't load. Reload the page to try again.";tr.append(td);$("tbody").append(tr);return;}
-  initFilters();renderFooter();
+  initControls();
+  let k="grain";try{k=new URL(location.href).searchParams.get("type")||localStorage.getItem("gea-type")||"grain";}catch(e){}
   try{await initMap();}catch(e){$("mapnote").textContent="The map couldn't load; the list below still works.";}
-  refresh();
+  const ok=await switchType(k);
   $("export").hidden=false;
   initBackend();
 })();
